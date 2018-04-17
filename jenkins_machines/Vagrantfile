@@ -1,0 +1,52 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "bento/ubuntu-16.04"
+
+  ssh_key = File.readlines(".ssh/id_rsa").join('')
+  ssh_pub_key = File.readlines(".ssh/id_rsa.pub").first.strip
+  # jenkins_init_config = File.readlines("jenkins/security.groovy").first.strip
+
+  config.vm.define "app_server" do |app_server|
+    app_server.vm.network "private_network", ip: "192.168.50.6"
+    app_server.vm.network "forwarded_port", guest: 8080, host: 9090
+    app_server.vm.hostname = "app-server"
+
+    # create systemd service
+    db_migration_services = File.readlines("jenkins_3_database_migration.service").join('')
+    app_server.vm.provision 'shell', inline: "sudo echo '#{db_migration_services}' > /etc/systemd/system/jenkins_3_database_migration.service"
+
+    app_server.vm.provision "shell", path: "provision_app_server.sh"
+    app_server.vm.provision 'shell', inline: "echo #{ssh_pub_key} >> /home/jenkins/.ssh/authorized_keys"
+    app_server.vm.provision "shell", path: "fix_ssh_dir_permission.sh", :args => "/home/jenkins"
+  end
+
+  config.vm.define "jenkins_node1" do |jenkins_node1|
+    jenkins_node1.vm.network "private_network", ip: "192.168.50.5"
+    jenkins_node1.vm.hostname = "jenkins-node1"
+    jenkins_node1.vm.provision "shell", path: "provision_jenkins_node1.sh"
+    jenkins_node1.vm.provision 'shell', inline: "echo '#{ssh_key}' > /home/jenkins/.ssh/id_rsa"
+    jenkins_node1.vm.provision 'shell', inline: "echo #{ssh_pub_key} >> /home/jenkins/.ssh/authorized_keys"
+    jenkins_node1.vm.provision "shell", path: "fix_ssh_dir_permission.sh", :args => "/home/jenkins"
+  end
+
+  config.vm.define "jenkins_master" do |jenkins_master|
+    jenkins_master.vm.network "private_network", ip: "192.168.50.4"
+    jenkins_master.vm.network "forwarded_port", guest: 8080, host: 8080
+    jenkins_master.vm.hostname = "jenkins-master"
+
+    jenkins_master.vm.provision "shell", path: "provision_jenkins_master.sh"
+    jenkins_master.vm.provision 'shell', inline: "echo '#{ssh_key}' > /var/lib/jenkins/.ssh/id_rsa"
+    jenkins_master.vm.provision 'shell', inline: "echo #{ssh_pub_key} >> /var/lib/jenkins/.ssh/id_rsa.pub"
+    jenkins_master.vm.provision "shell", path: "fix_ssh_dir_permission.sh", :args => "/var/lib/jenkins"
+
+    # jenkins_master.vm.provision 'shell', inline: "echo #{jenkins_init_config} >> /var/lib/jenkins/init.groovy.d/security.groovy"
+
+  end
+
+  # jenkins_master.vm.provision "file", source: ".ssh/", destination: "/var/lib/jenkins/.ssh"
+  # jenkins_master.vm.synced_folder "JENKINS_HOME/", "/var/lib/jenkins/"
+
+
+end

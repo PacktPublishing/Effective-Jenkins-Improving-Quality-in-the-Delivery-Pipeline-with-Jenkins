@@ -1,0 +1,31 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "bento/ubuntu-16.04"
+
+  config.vm.provider :digital_ocean do |provider, override|
+      override.ssh.private_key_path = '.ssh/id_rsa'
+      override.vm.box = 'digital_ocean'
+      override.vm.box_url = "https://github.com/devopsgroup-io/vagrant-digitalocean/raw/master/box/digital_ocean.box"
+      override.nfs.functional = false
+      provider.token = 'YOUR API KEY'
+      provider.image = 'ubuntu-16-04-x64'
+      provider.region = 'FRA1'
+      provider.size = '1gb'
+  end
+
+  ssh_key = File.readlines(".ssh/id_rsa").join('')
+  ssh_pub_key = File.readlines(".ssh/id_rsa.pub").first.strip
+
+  config.vm.define "jenkins_master_digocean" do |jenkins_master_digocean|
+    jenkins_master_digocean.vm.hostname = "jenkins-master"
+
+    jenkins_master_digocean.vm.provision "shell", path: "provision_jenkins_master.sh"
+    jenkins_master_digocean.vm.provision 'shell', inline: "echo '#{ssh_key}' > /var/lib/jenkins/.ssh/id_rsa"
+    jenkins_master_digocean.vm.provision 'shell', inline: "echo #{ssh_pub_key} >> /var/lib/jenkins/.ssh/id_rsa.pub"
+    jenkins_master_digocean.vm.provision "shell", path: "fix_ssh_dir_permission.sh", :args => "/var/lib/jenkins"
+
+  end
+
+end

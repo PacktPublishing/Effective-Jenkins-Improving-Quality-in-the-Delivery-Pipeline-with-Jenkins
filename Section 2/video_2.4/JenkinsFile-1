@@ -1,0 +1,25 @@
+pipeline {
+    agent { docker 'gradle:4.5-jdk8-alpine' }
+    stages {
+        stage ('Checkout') {
+          steps {
+            git 'https://github.com/effectivejenkins/jenkins_3_database_migration.git'
+          }
+        }
+        stage('Build') {
+            steps {
+                sh 'gradle clean compileJava'
+            }
+        }
+        stage('Integration-tests') {
+            steps {
+                sh 'gradle integrationTest'
+            }
+        }
+    }
+    post {
+        always {
+            junit 'build/test-results/**/TEST-*.xml'
+        }
+    }
+}

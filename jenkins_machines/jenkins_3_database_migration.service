@@ -1,0 +1,12 @@
+[Unit]
+Description=jenkins_3_database_migration
+After=syslog.target
+
+[Service]
+ExecStart=/opt/app/jenkins_3_database_migration.jar
+StandardOutput=syslog               # Output to syslog
+StandardError=syslog                # Output to syslog
+SyslogIdentifier=
+
+[Install]
+WantedBy=multi-user.target
