@@ -22,8 +22,8 @@ f you are a Java developer, a software architect, a technical project manager, a
 This course has the following software requirements:<br/>
 You need the tools installed locally:
 
-Virtualbox - v5.1.28 or latest
-Vagrant - v1.9.2 or latest
+- [Virtualbox](http://www.virtualbox.org/) - v5.1.28 or latest
+- [Vagrant](https://www.vagrantup.com/) - v1.9.2 or latest
 
 ## Related Products
 * [Effective Jenkins: Getting Started with Continuous Integration [Video]](https://www.packtpub.com/networking-and-servers/effective-jenkins-getting-started-continuous-integration-video?utm_source=github&utm_medium=repository&utm_campaign=9781788476294)
